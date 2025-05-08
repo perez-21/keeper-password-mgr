@@ -5,7 +5,7 @@ import PasswordVault from '@/components/PasswordVault';
 import PasswordGenerator from '@/components/PasswordGenerator';
 import AddPasswordModal from '@/components/AddPasswordModal';
 import { Button } from '@/components/ui/button';
-import { Shield, Plus } from 'lucide-react';
+import { KeyRound, Plus } from 'lucide-react';
 import { PasswordProvider } from '@/context/PasswordContext';
 
 const Index = () => {
@@ -17,9 +17,9 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 text-center">
             <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
-              <Shield className="w-8 h-8 text-whisper-purple" />
+              <KeyRound className="w-8 h-8 text-keeper-purple" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">WhisperKey</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Keeper</h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
               A simple and secure way to store and manage your passwords
             </p>
@@ -29,7 +29,7 @@ const Index = () => {
             <div className="flex-1">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold">Your Passwords</h2>
-                <Button onClick={() => setAddPasswordOpen(true)} className="bg-whisper-purple hover:bg-whisper-dark">
+                <Button onClick={() => setAddPasswordOpen(true)} className="bg-keeper-purple hover:bg-keeper-dark">
                   <Plus className="h-4 w-4 mr-2" /> Add Password
                 </Button>
               </div>

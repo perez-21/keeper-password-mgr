@@ -40,7 +40,7 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load passwords from localStorage on component mount
   useEffect(() => {
-    const storedPasswords = localStorage.getItem('whisperkey-passwords');
+    const storedPasswords = localStorage.getItem('keeper-passwords');
     if (storedPasswords) {
       try {
         const parsedPasswords = JSON.parse(storedPasswords).map((pass: PasswordEntry) => ({
@@ -63,9 +63,9 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         ...pass,
         password: encrypt(pass.password),
       }));
-      localStorage.setItem('whisperkey-passwords', JSON.stringify(encryptedPasswords));
+      localStorage.setItem('keeper-passwords', JSON.stringify(encryptedPasswords));
     } else {
-      localStorage.removeItem('whisperkey-passwords');
+      localStorage.removeItem('keeper-passwords');
     }
   }, [passwords]);
 
