@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { KeyRound, User, Mail, Save } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Account = () => {
   const { user, isLoaded } = useUser();
@@ -61,7 +62,9 @@ const Account = () => {
       <Layout>
         <div className="flex items-center justify-center h-64">
           <p>Please sign in to access your account.</p>
-          <Button href="/login" variant="link">Sign In</Button>
+          <Button variant="link" asChild>
+            <Link to="/login">Sign In</Link>
+          </Button>
         </div>
       </Layout>
     );
@@ -177,7 +180,7 @@ const Account = () => {
             </CardContent>
             <CardFooter>
               <Button 
-                onClick={() => window.open(user.createdAt > 0 ? 'https://accounts.clerk.dev/account' : '#', '_blank')}
+                onClick={() => window.open('https://accounts.clerk.dev/account', '_blank')}
                 variant="outline"
               >
                 Manage Security Settings

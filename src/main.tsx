@@ -4,12 +4,9 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App.tsx';
 import './index.css';
 
-// Replace with your actual Clerk publishable key
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Clerk Publishable Key - make sure to add VITE_CLERK_PUBLISHABLE_KEY to your environment variables");
-}
+// Use environment variable or fallback to a placeholder for development
+// Note: In production, you must set the actual VITE_CLERK_PUBLISHABLE_KEY environment variable
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder_value_for_development';
 
 createRoot(document.getElementById("root")!).render(
   <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
