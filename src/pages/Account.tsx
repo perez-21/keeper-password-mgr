@@ -1,0 +1,193 @@
+
+import React, { useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
+import { toast } from 'sonner';
+import Layout from '@/components/Layout';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { KeyRound, User, Mail, Save } from 'lucide-react';
+
+const Account = () => {
+  const { user, isLoaded } = useUser();
+  
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
+  const [email, setEmail] = useState(user?.primaryEmailAddress?.emailAddress || '');
+  const [isPending, setIsPending] = useState(false);
+  
+  const handleUpdateProfile = async () => {
+    if (!isLoaded || !user) return;
+    
+    try {
+      setIsPending(true);
+      
+      // Update name
+      if (firstName !== user.firstName || lastName !== user.lastName) {
+        await user.update({
+          firstName,
+          lastName
+        });
+      }
+      
+      // Update email if changed
+      const currentEmail = user.primaryEmailAddress?.emailAddress;
+      if (email !== currentEmail && email.trim()) {
+        await user.createEmailAddress({ email });
+        toast.info("Verification email sent to your new address. Please verify to complete the change.");
+      }
+      
+      toast.success("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
+  };
+  
+  if (!isLoaded) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <p>Loading account details...</p>
+        </div>
+      </Layout>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <p>Please sign in to access your account.</p>
+          <Button href="/login" variant="link">Sign In</Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
+            <User className="w-8 h-8 text-keeper-purple" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">My Account</h1>
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Manage your account settings and profile
+          </p>
+        </div>
+        
+        <div className="grid gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" /> Personal Information
+              </CardTitle>
+              <CardDescription>
+                Update your name and profile details
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
+                  <Input
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="lastName" className="text-sm font-medium">Last Name</label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                  />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleUpdateProfile} 
+                disabled={isPending}
+                className="bg-keeper-purple hover:bg-keeper-dark"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" /> Email Address
+              </CardTitle>
+              <CardDescription>
+                Update your email (verification required)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">Email Address</label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Your email address"
+                />
+                <p className="text-xs text-muted-foreground">
+                  When changing your email, you'll need to verify the new address
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleUpdateProfile} 
+                disabled={isPending || email === user.primaryEmailAddress?.emailAddress}
+                className="bg-keeper-purple hover:bg-keeper-dark"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isPending ? 'Updating...' : 'Update Email'}
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5" /> Security
+              </CardTitle>
+              <CardDescription>
+                Manage your security settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                To change your password or enable two-factor authentication,
+                visit your account security settings.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={() => window.open(user.createdAt > 0 ? 'https://accounts.clerk.dev/account' : '#', '_blank')}
+                variant="outline"
+              >
+                Manage Security Settings
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default Account;

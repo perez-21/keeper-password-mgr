@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import Layout from '@/components/Layout';
 import PasswordVault from '@/components/PasswordVault';
 import PasswordGenerator from '@/components/PasswordGenerator';
@@ -10,6 +11,8 @@ import { PasswordProvider } from '@/context/PasswordContext';
 
 const Index = () => {
   const [addPasswordOpen, setAddPasswordOpen] = useState(false);
+  const { user } = useUser();
+  
   return (
     <PasswordProvider>
       <Layout>
@@ -18,7 +21,7 @@ const Index = () => {
             <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
               <KeyRound className="w-8 h-8 text-keeper-purple" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">Keeper</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Welcome to Keeper{user?.firstName ? `, ${user.firstName}` : ''}</h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
               A simple and secure way to store and manage your passwords
             </p>

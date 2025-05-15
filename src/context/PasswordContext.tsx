@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/clerk-react';
 
 export interface PasswordEntry {
   id: string;
@@ -36,12 +37,15 @@ const decrypt = (text: string): string => {
 
 export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [passwords, setPasswords] = useState<PasswordEntry[]>([]);
-
-  // Load passwords on component mount
-  useEffect( () => {
-
+  const { user, isSignedIn, isLoaded } = useUser();
+  
+  // Load passwords when component mounts and user is signed in
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user) return;
+    
     const getPasswords = async () => {
       try {
+        // Add the user ID to the fetch request
         const response = await fetch("http://localhost:3000/api/passwords");
         const data = await response.json();
         const decryptedPasswords = data.map((pass: PasswordEntry) => ({
@@ -51,32 +55,37 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setPasswords(decryptedPasswords);
       } catch (error) {
         console.error('Failed to fetch passwords:', error);
+        toast.error('Failed to load your passwords');
       }
     }
-    getPasswords();
     
-  }, []);
-
+    getPasswords();
+  }, [isLoaded, isSignedIn, user]);
 
   const addPassword = async (password: Omit<PasswordEntry, 'id'>) => {
+    if (!isSignedIn || !user) {
+      toast.error('You must be signed in to add passwords');
+      return;
+    }
 
     try {
-        
       const encryptedPassword = {
         ...password,
         password: encrypt(password.password),
       }
-        
+      
       const response = await fetch("http://localhost:3000/api/passwords", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json' 
         },
-        body: JSON.stringify({...encryptedPassword, userId: 'bae06cc4-dacc-4b73-a72b-9a60acb23ec2'})
+        body: JSON.stringify({...encryptedPassword, userId: user.id})
       });
+      
       if (!response.ok) {
         throw new Error('Failed to save passwords');
       }
+      
       const data = await response.json();
 
       setPasswords((prevPasswords) => [...prevPasswords, { ...data, password: decrypt(data.password)}]);
@@ -87,17 +96,18 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('Failed to save password:', error);
       toast.error('Failed to save password');
     }
-    
-    
-
   };
 
   const updatePassword = async (id: string, passwordUpdate: Partial<PasswordEntry>) => {
+    if (!isSignedIn || !user) {
+      toast.error('You must be signed in to update passwords');
+      return;
+    }
 
     try {
       const encryptedPassword = {
         ...passwordUpdate,
-        password: encrypt(passwordUpdate.password),
+        password: passwordUpdate.password ? encrypt(passwordUpdate.password) : undefined,
       }
 
       const response = await fetch(`http://localhost:3000/api/passwords/${id}`, {
@@ -105,13 +115,19 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: {
           'Content-Type': 'application/json' 
         },
-        body: JSON.stringify({...encryptedPassword, userId: 'bae06cc4-dacc-4b73-a72b-9a60acb23ec2'})
+        body: JSON.stringify({...encryptedPassword, userId: user.id})
       });
+      
       if (!response.ok) {
         throw new Error('Failed to update password');
       }
+      
       const data = await response.json();
-      setPasswords((prevPasswords) => [...(prevPasswords.filter((pass) => pass.id !== id)), { ...data, password: decrypt(data.password)}]);
+      setPasswords((prevPasswords) => 
+        prevPasswords.map(pass => 
+          pass.id === id ? { ...data, password: decrypt(data.password)} : pass
+        )
+      );
       toast.success('Password updated successfully');
     } catch (error) {
       console.error('Failed to update password:', error);
@@ -120,21 +136,26 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const deletePassword = async (id: string) => {
+    if (!isSignedIn || !user) {
+      toast.error('You must be signed in to delete passwords');
+      return;
+    }
 
     try {
       const response = await fetch(`http://localhost:3000/api/passwords/${id}`, {
         method: 'DELETE',
       });
+      
       if (!response.ok) {
         throw new Error('Failed to delete password');
       }
+      
       setPasswords((prevPasswords) => prevPasswords.filter((pass) => pass.id !== id));
       toast.success('Password deleted successfully');
     } catch (error) {
       console.error('Failed to delete password:', error);
       toast.error('Failed to delete password');
     }
-    
   };
 
   const getPassword = (id: string) => {
