@@ -10,7 +10,6 @@ import { PasswordProvider } from '@/context/PasswordContext';
 
 const Index = () => {
   const [addPasswordOpen, setAddPasswordOpen] = useState(false);
-
   return (
     <PasswordProvider>
       <Layout>

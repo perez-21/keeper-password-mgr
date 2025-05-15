@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { Eye, EyeOff, Copy, Trash, Globe, User } from 'lucide-react';
+import { Eye, EyeOff, Copy, Trash, Globe, User, SquarePen } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PasswordEntry, usePasswords } from '@/context/PasswordContext';
+import UpdatePasswordModal from './UpdatePasswordModal';
 
 interface PasswordItemProps {
   password: PasswordEntry;
@@ -12,8 +13,11 @@ interface PasswordItemProps {
 
 const PasswordItem: React.FC<PasswordItemProps> = ({ password }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [updatePasswordOpen, setUpdatePasswordOpen] = useState(false);
+
   const { toast } = useToast();
   const { deletePassword } = usePasswords();
+  
 
   const handleToggleVisibility = () => {
     setShowPassword(!showPassword);
@@ -38,20 +42,35 @@ const PasswordItem: React.FC<PasswordItemProps> = ({ password }) => {
     }
   };
 
+  const handleUpdate = () => {
+    setUpdatePasswordOpen(true);
+  }
+
   return (
     <Card className="hover:shadow-md transition-shadow bg-white">
       <CardContent className="p-4">
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-lg">{password.title}</h3>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleDelete}
-              className="text-red-500 hover:text-red-700 hover:bg-red-100"
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
+            <div className="flex justify-center items-center">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleDelete}
+                className="text-red-500 hover:text-red-700 hover:bg-red-100"
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleUpdate}
+                className="text-keeper-purple hover:text-white-700 hover:bg-keeper-dark"
+              >
+                <SquarePen className="h-4 w-4" />
+              </Button>
+            </div>
+            
           </div>
 
           <div className="text-sm text-muted-foreground">
@@ -116,6 +135,8 @@ const PasswordItem: React.FC<PasswordItemProps> = ({ password }) => {
           </div>
         </div>
       </CardContent>
+      <UpdatePasswordModal open={updatePasswordOpen} onOpenChange={setUpdatePasswordOpen} oldPassword={password} />
+
     </Card>
   );
 };

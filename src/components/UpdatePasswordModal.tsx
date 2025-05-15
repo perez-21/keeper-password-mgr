@@ -4,29 +4,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { usePasswords } from '@/context/PasswordContext';
-import { EyeOff, Eye } from 'lucide-react';
+import { PasswordEntry, usePasswords } from '@/context/PasswordContext';
+import { Eye } from 'lucide-react';
+import { EyeOff } from 'lucide-react';
 
-interface AddPasswordModalProps {
+interface UpdatePasswordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialPassword?: string;
+  oldPassword: PasswordEntry;
 }
 
-const AddPasswordModal: React.FC<AddPasswordModalProps> = ({ open, onOpenChange, initialPassword }) => {
-  const { addPassword } = usePasswords();
+const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({ open, onOpenChange, oldPassword }) => {
+  const { updatePassword } = usePasswords();
   const { toast } = useToast();
-  const [title, setTitle] = React.useState('');
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState(initialPassword || '');
-  const [website, setWebsite] = React.useState('');
+  const [title, setTitle] = React.useState(oldPassword.title);
+  const [username, setUsername] = React.useState(oldPassword.username);
+  const [password, setPassword] = React.useState(oldPassword.password);
+  const [website, setWebsite] = React.useState(oldPassword.website || '');
   const [showPassword, setShowPassword] = React.useState(false);
 
   React.useEffect(() => {
-    if (open && initialPassword) {
-      setPassword(initialPassword);
+    if (open) {
+      setTitle(oldPassword.title);
+      setUsername(oldPassword.username);
+      setPassword(oldPassword.password);
+      setWebsite(oldPassword.website || '');
     }
-  }, [open, initialPassword]);
+  }, [open, oldPassword]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,27 +44,22 @@ const AddPasswordModal: React.FC<AddPasswordModalProps> = ({ open, onOpenChange,
       return;
     }
 
-    addPassword({
+    updatePassword(oldPassword.id, {
       title,
       username,
       password,
       website,
     });
 
-    // toast({
-    //   title: "Password added",
-    //   description: "Your password has been saved securely.",
-    // });
-
     resetForm();
     onOpenChange(false);
   };
 
   const resetForm = () => {
-    setTitle('');
-    setUsername('');
-    setPassword('');
-    setWebsite('');
+    setTitle("");
+    setUsername( "");
+    setPassword("");
+    setWebsite("");
   };
 
   return (
@@ -68,9 +67,9 @@ const AddPasswordModal: React.FC<AddPasswordModalProps> = ({ open, onOpenChange,
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Add New Password</DialogTitle>
+            <DialogTitle>Update Password</DialogTitle>
             <DialogDescription>
-              Enter the details of the password you want to save.
+              Update the details of the password you want to save.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -132,6 +131,7 @@ const AddPasswordModal: React.FC<AddPasswordModalProps> = ({ open, onOpenChange,
               onClick={() => {
                 resetForm();
                 onOpenChange(false);
+                setShowPassword(false);
               }}
             >
               Cancel
@@ -146,4 +146,4 @@ const AddPasswordModal: React.FC<AddPasswordModalProps> = ({ open, onOpenChange,
   );
 };
 
-export default AddPasswordModal;
+export default UpdatePasswordModal;
