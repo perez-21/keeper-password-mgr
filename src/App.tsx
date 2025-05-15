@@ -4,7 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ClerkLoaded, ClerkLoading, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { AuthProvider } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -19,12 +20,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <ClerkLoading>
-          <div className="flex items-center justify-center min-h-screen">
-            Loading authentication...
-          </div>
-        </ClerkLoading>
-        <ClerkLoaded>
+        <AuthProvider>
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
@@ -34,34 +30,24 @@ const App = () => (
             <Route
               path="/"
               element={
-                <SignedIn>
+                <ProtectedRoute>
                   <Index />
-                </SignedIn>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/account"
               element={
-                <SignedIn>
+                <ProtectedRoute>
                   <Account />
-                </SignedIn>
-              }
-            />
-            
-            {/* Redirect from protected routes when signed out */}
-            <Route
-              path="/"
-              element={
-                <SignedOut>
-                  <Navigate to="/login" replace />
-                </SignedOut>
+                </ProtectedRoute>
               }
             />
             
             {/* 404 route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </ClerkLoaded>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

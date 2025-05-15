@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { Input } from '@/components/ui/input';
@@ -10,35 +10,32 @@ import { KeyRound, User, Mail, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Account = () => {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded, isAuthenticated, updateProfile, updateEmail } = useAuth();
   
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
-  const [email, setEmail] = useState(user?.primaryEmailAddress?.emailAddress || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [isPending, setIsPending] = useState(false);
   
   const handleUpdateProfile = async () => {
-    if (!isLoaded || !user) return;
+    if (!isLoaded || !isAuthenticated) return;
     
     try {
       setIsPending(true);
       
       // Update name
-      if (firstName !== user.firstName || lastName !== user.lastName) {
-        await user.update({
+      if (firstName !== user?.firstName || lastName !== user?.lastName) {
+        await updateProfile({
           firstName,
           lastName
         });
       }
       
       // Update email if changed
-      const currentEmail = user.primaryEmailAddress?.emailAddress;
-      if (email !== currentEmail && email.trim()) {
-        await user.createEmailAddress({ email });
-        toast.info("Verification email sent to your new address. Please verify to complete the change.");
+      if (email !== user?.email && email.trim()) {
+        await updateEmail(email);
       }
       
-      toast.success("Profile updated successfully!");
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile. Please try again.");
@@ -57,7 +54,7 @@ const Account = () => {
     );
   }
   
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-64">
@@ -154,7 +151,7 @@ const Account = () => {
             <CardFooter>
               <Button 
                 onClick={handleUpdateProfile} 
-                disabled={isPending || email === user.primaryEmailAddress?.emailAddress}
+                disabled={isPending || email === user.email}
                 className="bg-keeper-purple hover:bg-keeper-dark"
               >
                 <Save className="h-4 w-4 mr-2" />
@@ -174,16 +171,15 @@ const Account = () => {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                To change your password or enable two-factor authentication,
-                visit your account security settings.
+                You can change your password and enable additional security features in your security settings.
               </p>
             </CardContent>
             <CardFooter>
               <Button 
-                onClick={() => window.open('https://accounts.clerk.dev/account', '_blank')}
+                onClick={() => toast.info("Password change functionality will be implemented soon")}
                 variant="outline"
               >
-                Manage Security Settings
+                Change Password
               </Button>
             </CardFooter>
           </Card>

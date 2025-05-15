@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useUser } from '@clerk/clerk-react';
+import { useAuth } from '@/context/AuthContext';
 
 export interface PasswordEntry {
   id: string;
@@ -37,16 +37,31 @@ const decrypt = (text: string): string => {
 
 export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [passwords, setPasswords] = useState<PasswordEntry[]>([]);
-  const { user, isSignedIn, isLoaded } = useUser();
+  const { user, isAuthenticated, isLoaded } = useAuth();
+  
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('accessToken');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
   
   // Load passwords when component mounts and user is signed in
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !user) return;
+    if (!isLoaded || !isAuthenticated || !user) return;
     
     const getPasswords = async () => {
       try {
-        // Add the user ID to the fetch request
-        const response = await fetch("http://localhost:3000/api/passwords");
+        const response = await fetch("http://localhost:3000/api/passwords", {
+          headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch passwords');
+        }
+        
         const data = await response.json();
         const decryptedPasswords = data.map((pass: PasswordEntry) => ({
           ...pass,
@@ -60,10 +75,10 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
     
     getPasswords();
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isAuthenticated, user]);
 
   const addPassword = async (password: Omit<PasswordEntry, 'id'>) => {
-    if (!isSignedIn || !user) {
+    if (!isAuthenticated || !user) {
       toast.error('You must be signed in to add passwords');
       return;
     }
@@ -76,20 +91,17 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       const response = await fetch("http://localhost:3000/api/passwords", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({...encryptedPassword, userId: user.id})
+        headers: getAuthHeaders(),
+        body: JSON.stringify(encryptedPassword)
       });
       
       if (!response.ok) {
-        throw new Error('Failed to save passwords');
+        throw new Error('Failed to save password');
       }
       
       const data = await response.json();
 
       setPasswords((prevPasswords) => [...prevPasswords, { ...data, password: decrypt(data.password)}]);
-      console.log('Password saved:', data);
       toast.success('Password saved successfully');  
       
     } catch (error) {
@@ -99,7 +111,7 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updatePassword = async (id: string, passwordUpdate: Partial<PasswordEntry>) => {
-    if (!isSignedIn || !user) {
+    if (!isAuthenticated || !user) {
       toast.error('You must be signed in to update passwords');
       return;
     }
@@ -112,10 +124,8 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       const response = await fetch(`http://localhost:3000/api/passwords/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({...encryptedPassword, userId: user.id})
+        headers: getAuthHeaders(),
+        body: JSON.stringify(encryptedPassword)
       });
       
       if (!response.ok) {
@@ -136,7 +146,7 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const deletePassword = async (id: string) => {
-    if (!isSignedIn || !user) {
+    if (!isAuthenticated || !user) {
       toast.error('You must be signed in to delete passwords');
       return;
     }
@@ -144,6 +154,7 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const response = await fetch(`http://localhost:3000/api/passwords/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders()
       });
       
       if (!response.ok) {

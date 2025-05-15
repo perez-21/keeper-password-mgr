@@ -1,16 +1,16 @@
 
 import React from 'react';
-import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
 import { Link } from 'react-router-dom';
 import { KeyRound, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { user } = useUser();
+  const { user, isAuthenticated, logout } = useAuth();
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -26,17 +26,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
           
           <div className="flex items-center gap-4">
-            <SignedIn>
+            {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <Link to="/account" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                   <User className="h-4 w-4" />
                   <span className="hidden md:inline">My Account</span>
                 </Link>
-                <UserButton afterSignOutUrl="/login" />
+                <Button 
+                  onClick={logout} 
+                  variant="ghost" 
+                  size="sm"
+                >
+                  Sign out
+                </Button>
               </div>
-            </SignedIn>
-            
-            <SignedOut>
+            ) : (
               <div className="flex items-center gap-2">
                 <Button asChild variant="ghost" size="sm">
                   <Link to="/login">Sign in</Link>
@@ -45,7 +49,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Link to="/signup">Sign up</Link>
                 </Button>
               </div>
-            </SignedOut>
+            )}
           </div>
         </div>
       </header>

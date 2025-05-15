@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout';
 import PasswordVault from '@/components/PasswordVault';
 import PasswordGenerator from '@/components/PasswordGenerator';
@@ -11,7 +11,7 @@ import { PasswordProvider } from '@/context/PasswordContext';
 
 const Index = () => {
   const [addPasswordOpen, setAddPasswordOpen] = useState(false);
-  const { user } = useUser();
+  const { user } = useAuth();
   
   return (
     <PasswordProvider>
