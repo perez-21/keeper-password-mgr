@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -31,94 +30,37 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-// Define interface for JWT token payload
-interface TokenPayload {
-  userId: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  exp: number;
-}
-
 // Create the AuthProvider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
 
-  // Function to parse JWT token
-  const parseJwt = (token: string): TokenPayload | null => {
+  // Function to fetch user information
+  const fetchUserInfo = async (): Promise<User | null> => {
     try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(jsonPayload);
-    } catch (error) {
-      console.error('Error parsing JWT:', error);
-      return null;
-    }
-  };
+      const token = localStorage.getItem('accessToken');
+      if (!token) return null;
 
-  // Function to check if token is expired
-  const isTokenExpired = (token: string): boolean => {
-    const payload = parseJwt(token);
-    if (!payload) return true;
-    
-    const currentTime = Date.now() / 1000;
-    return payload.exp < currentTime;
-  };
-
-  // Function to handle token refresh
-  const refreshToken = async (): Promise<boolean> => {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) return false;
-
-      const response = await fetch('http://localhost:3000/api/auth/refresh', {
-        method: 'POST',
+      const response = await fetch('http://localhost:3000/api/auth/me', {
         headers: {
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ refreshToken }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to refresh token');
+        if (response.status === 401) {
+          localStorage.removeItem('accessToken');
+          return null;
+        }
+        throw new Error('Failed to fetch user info');
       }
 
-      const data = await response.json();
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      return true;
+      return await response.json();
     } catch (error) {
-      console.error('Error refreshing token:', error);
-      return false;
-    }
-  };
-
-  // Function to get authenticated user from token
-  const getUserFromToken = (): User | null => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return null;
-
-    if (isTokenExpired(token)) {
+      console.error('Error fetching user info:', error);
       return null;
     }
-
-    const payload = parseJwt(token);
-    if (!payload) return null;
-
-    return {
-      id: payload.userId,
-      email: payload.email,
-      firstName: payload.firstName,
-      lastName: payload.lastName,
-    };
   };
 
   // Function to login
@@ -137,10 +79,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const data = await response.json();
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('accessToken', data.access_token);
+      
 
-      const userInfo = getUserFromToken();
+      const userInfo = await fetchUserInfo();
       setUser(userInfo);
       toast.success('Login successful!');
       navigate('/');
@@ -154,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Function to signup
   const signup = async (email: string, password: string, firstName?: string, lastName?: string): Promise<void> => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/signup', {
+      const response = await fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,10 +109,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const data = await response.json();
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('accessToken', data.access_token);
 
-      const userInfo = getUserFromToken();
+      const userInfo = await fetchUserInfo();
       setUser(userInfo);
       toast.success('Account created successfully!');
       navigate('/');
@@ -184,7 +125,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Function to logout
   const logout = (): void => {
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     setUser(null);
     toast.success('You have been logged out.');
     navigate('/login');
@@ -256,22 +196,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        
-        if (token) {
-          if (isTokenExpired(token)) {
-            const refreshed = await refreshToken();
-            if (!refreshed) {
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
-              setUser(null);
-            } else {
-              setUser(getUserFromToken());
-            }
-          } else {
-            setUser(getUserFromToken());
-          }
-        }
+        const userInfo = await fetchUserInfo();
+        setUser(userInfo);
       } catch (error) {
         console.error('Auth initialization error:', error);
       } finally {

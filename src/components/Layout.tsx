@@ -28,9 +28,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
+                
                 <Link to="/account" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                   <User className="h-4 w-4" />
                   <span className="hidden md:inline">My Account</span>
+                </Link>
+                <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                  <KeyRound className="h-4 w-4" />
+                  <span className="hidden md:inline">Passwords</span>
                 </Link>
                 <Button 
                   onClick={logout} 

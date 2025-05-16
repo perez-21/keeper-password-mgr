@@ -35,6 +35,9 @@ const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({ open, onOpenC
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    onOpenChange(false);
+    setShowPassword(false);
+
     if (!title || !username || !password) {
       toast({
         title: "Missing fields",
