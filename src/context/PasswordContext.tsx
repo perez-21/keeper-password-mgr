@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from './AuthContext';
+import { API_BASE_URL } from '@/config';
 
 export interface PasswordEntry {
   id: string;
@@ -54,7 +54,7 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     const getPasswords = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/passwords", {
+        const response = await fetch(`${API_BASE_URL}/passwords`, {
           headers: getAuthHeaders()
         });
         
@@ -89,14 +89,14 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         password: encrypt(password.password),
       }
       
-      const response = await fetch("http://localhost:3000/api/passwords", {
+      const response = await fetch(`${API_BASE_URL}/passwords`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(encryptedPassword)
+        body: JSON.stringify({...encryptedPassword, userId: user?.id})
       });
       
       if (!response.ok) {
-        throw new Error('Failed to save password');
+        throw new Error('Failed to save passwords');
       }
       
       const data = await response.json();
@@ -119,13 +119,13 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const encryptedPassword = {
         ...passwordUpdate,
-        password: passwordUpdate.password ? encrypt(passwordUpdate.password) : undefined,
+        password: encrypt(passwordUpdate.password),
       }
 
-      const response = await fetch(`http://localhost:3000/api/passwords/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/passwords/${id}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify(encryptedPassword)
+        body: JSON.stringify({...encryptedPassword, userId: user?.id})
       });
       
       if (!response.ok) {
@@ -133,11 +133,7 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       
       const data = await response.json();
-      setPasswords((prevPasswords) => 
-        prevPasswords.map(pass => 
-          pass.id === id ? { ...data, password: decrypt(data.password)} : pass
-        )
-      );
+      setPasswords((prevPasswords) => [...(prevPasswords.filter((pass) => pass.id !== id)), { ...data, password: decrypt(data.password)}]);
       toast.success('Password updated successfully');
     } catch (error) {
       console.error('Failed to update password:', error);
@@ -152,7 +148,7 @@ export const PasswordProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/passwords/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/passwords/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });

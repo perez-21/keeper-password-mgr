@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { API_BASE_URL } from '@/config';
 
 // Define interface for user
 interface User {
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       if (!token) return null;
 
-      const response = await fetch('http://localhost:3000/api/auth/me', {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -66,7 +67,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Function to login
   const login = async (email: string, password: string): Promise<void> => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      console.log(`${API_BASE_URL}/auth/login`);
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Function to signup
   const signup = async (email: string, password: string, firstName?: string, lastName?: string): Promise<void> => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -139,7 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/users/profile', {
+      const response = await fetch(`${API_BASE_URL}/users/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -171,7 +173,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/users/email', {
+      const response = await fetch(`${API_BASE_URL}/users/email`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
